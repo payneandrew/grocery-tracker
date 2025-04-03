@@ -1,77 +1,84 @@
-"use server"
+"use server";
 
-import { generateText } from "ai"
-import { openai } from "@ai-sdk/openai"
-import { v4 as uuidv4 } from "uuid"
-import { revalidatePath } from "next/cache"
-import type { ProcessedReceipt } from "./types"
-import { saveReceipt } from "./data"
+import { openai } from "@ai-sdk/openai";
+import vision from "@google-cloud/vision";
+import { generateObject } from "ai";
+import { revalidatePath } from "next/cache";
+import { v4 as uuidv4 } from "uuid";
+import { z } from "zod";
+import { saveReceipt } from "./data";
+import type { ProcessedReceipt } from "./types";
 
-export async function processReceipt(formData: FormData): Promise<ProcessedReceipt> {
+export async function processReceipt(
+  formData: FormData
+): Promise<ProcessedReceipt> {
   try {
     // Get the receipt file from the form data
-    const file = formData.get("receipt") as File
+    const file = formData.get("receipt") as File;
 
     if (!file) {
-      throw new Error("No receipt file provided")
+      throw new Error("No receipt file provided");
     }
 
-    // In a real application, you would use OCR to extract text from the receipt image
-    // For this example, we'll simulate OCR by using AI to generate receipt data
+    const buffer = Buffer.from(await file.arrayBuffer());
 
-    // Convert the file to a base64 string (in a real app, you'd use OCR here)
-    const buffer = Buffer.from(await file.arrayBuffer())
-    const base64 = buffer.toString("base64")
+    const client = new vision.ImageAnnotatorClient();
+
+    // Perform text detection on the image buffer
+    const [result] = await client.textDetection(buffer);
+    const detections = result.textAnnotations;
+    const ocrText =
+      detections && detections[0] ? detections[0].description : "";
+
+    console.log("OCR extracted text:", ocrText);
+
+    const receiptSchema = z.object({
+      store: z.string(),
+      date: z.string(),
+      items: z.array(
+        z.object({
+          name: z.string(),
+          category: z.string(),
+          price: z.number(),
+        })
+      ),
+      total: z.number(),
+    });
 
     // Use AI to extract and categorize items from the receipt
-    const { text } = await generateText({
+    const { object } = await generateObject({
       model: openai("gpt-4o"),
       prompt: `
-        You are an AI assistant that processes grocery receipts. 
-        I have a grocery receipt image. Please generate realistic grocery receipt data with the following:
-        
-        1. Store name
-        2. Date (use today's date)
-        3. A list of 5-10 grocery items with:
-           - Item name
-           - Price
-           - Category (must be one of: Produce, Meat & Seafood, Dairy, Bakery, Pantry, Frozen, Beverages, Snacks, Household, Personal Care)
-        4. Total amount
-        
-        Format your response as a JSON object with this structure:
-        {
-          "store": "Store Name",
-          "date": "YYYY-MM-DD",
-          "items": [
-            {
-              "name": "Item Name",
-              "price": 0.00,
-              "category": "Category"
-            }
-          ],
-          "total": 0.00
-        }
-        
-        Make sure the prices are realistic and the total is the sum of all item prices.
-      `,
-    })
+      You are an AI assistant that processes real grocery receipts.
 
-    // Parse the AI-generated receipt data
-    const receiptData = JSON.parse(text) as ProcessedReceipt
+    Extract and structure the following from this raw receipt text:
+
+    \`\`\`
+    ${ocrText}
+    \`\`\`
+
+    Assign each item a detailed and contextually appropriate category based on the receipt content.
+  `,
+      schema: receiptSchema,
+      temperature: 0.2,
+    });
+
+    const receiptData = object;
+
+    console.log("Generated receipt data:", receiptData);
 
     // Save the receipt to our data store
     await saveReceipt({
       id: uuidv4(),
       ...receiptData,
-    })
+    });
 
     // Revalidate the home page to show the new data
-    revalidatePath("/")
+    revalidatePath("/");
 
-    return receiptData
+    return receiptData;
   } catch (error) {
-    console.error("Error processing receipt:", error)
-    throw new Error("Failed to process receipt")
+    console.error("Error processing receipt:", error);
+    throw new Error("Failed to process receipt");
   }
 }
-
