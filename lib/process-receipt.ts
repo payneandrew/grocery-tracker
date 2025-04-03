@@ -1,12 +1,12 @@
 "use server";
 
 import { openai } from "@ai-sdk/openai";
-import vision from "@google-cloud/vision";
 import { generateObject } from "ai";
 import { revalidatePath } from "next/cache";
 import { v4 as uuidv4 } from "uuid";
 import { z } from "zod";
 import { saveReceipt } from "./data";
+import { googleClient } from "./google-client";
 import type { ProcessedReceipt } from "./types";
 
 export async function processReceipt(
@@ -22,13 +22,10 @@ export async function processReceipt(
 
     const buffer = Buffer.from(await file.arrayBuffer());
 
-    const client = new vision.ImageAnnotatorClient();
-
-    // Perform text detection on the image buffer
-    const [result] = await client.textDetection(buffer);
+    const [result] = await googleClient.textDetection(buffer);
     const detections = result.textAnnotations;
     const ocrText =
-      detections && detections[0] ? detections[0].description : "";
+      detections && detections[0] ? detections[0].description : "no text found";
 
     console.log("OCR extracted text:", ocrText);
 
