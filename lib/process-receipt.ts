@@ -65,8 +65,6 @@ export async function processReceipt(
 
     const receiptData = object;
 
-    console.log("Generated receipt data:", receiptData);
-
     // Save the receipt to our data store
     await saveReceipt({
       id: uuidv4(),
