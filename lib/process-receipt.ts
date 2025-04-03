@@ -54,7 +54,7 @@ export async function processReceipt(
     ${ocrText}
     \`\`\`
 
-    Assign each item a detailed and contextually appropriate category based on the receipt content.
+     Ensure the store name is clearly formatted, removing unnecessary abbreviations, extra numbers, special characters, or unclear wording. Ensure each grocery item's name is clearly formatted, removing unnecessary abbreviations, extra numbers, special characters, or unclear wording. Assign each item a detailed and contextually appropriate category based on the receipt content.
   `,
       schema: receiptSchema,
       temperature: 0.2,
@@ -63,8 +63,10 @@ export async function processReceipt(
     const receiptData = object;
 
     // Save the receipt to our data store
+    const user_id = formData.get("user_id") as string;
     await saveReceipt({
       id: uuidv4(),
+      user_id,
       ...receiptData,
     });
 

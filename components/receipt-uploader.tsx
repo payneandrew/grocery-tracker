@@ -12,6 +12,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
+import { getUserId } from "@/lib/get-user-id";
 import { processReceipt } from "@/lib/process-receipt";
 import { Loader2, Upload } from "lucide-react";
 import { useState } from "react";
@@ -35,6 +36,7 @@ export function ReceiptUploader() {
       // Create a FormData object to send the file
       const formData = new FormData();
       formData.append("receipt", file);
+      formData.append("user_id", getUserId());
 
       // Process the receipt
       const result = await processReceipt(formData);

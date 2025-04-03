@@ -1,35 +1,57 @@
-"use client"
+"use client";
 
-import { useState, useEffect } from "react"
-import { format } from "date-fns"
-import { Receipt, Eye } from "lucide-react"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { getRecentReceipts } from "@/lib/data"
-import type { ReceiptData } from "@/lib/types"
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { getRecentReceipts } from "@/lib/data";
+import { getUserId } from "@/lib/get-user-id";
+import type { ReceiptData } from "@/lib/types";
+import { format } from "date-fns";
+import { Eye, Receipt } from "lucide-react";
+import { useEffect, useState } from "react";
 
 export function RecentReceipts() {
-  const [receipts, setReceipts] = useState<ReceiptData[]>([])
-  const [isLoading, setIsLoading] = useState(true)
-  const [selectedReceipt, setSelectedReceipt] = useState<ReceiptData | null>(null)
+  const [receipts, setReceipts] = useState<ReceiptData[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [selectedReceipt, setSelectedReceipt] = useState<ReceiptData | null>(
+    null
+  );
 
   useEffect(() => {
     const fetchReceipts = async () => {
-      setIsLoading(true)
+      setIsLoading(true);
       try {
-        const data = await getRecentReceipts()
-        setReceipts(data)
+        const data = await getRecentReceipts(getUserId());
+        setReceipts(data);
       } catch (error) {
-        console.error("Error fetching receipts:", error)
+        console.error("Error fetching receipts:", error);
       } finally {
-        setIsLoading(false)
+        setIsLoading(false);
       }
-    }
+    };
 
-    fetchReceipts()
-  }, [])
+    fetchReceipts();
+  }, []);
 
   return (
     <Card>
@@ -57,14 +79,24 @@ export function RecentReceipts() {
               <TableBody>
                 {receipts.map((receipt) => (
                   <TableRow key={receipt.id}>
-                    <TableCell>{format(new Date(receipt.date), "MMM d, yyyy")}</TableCell>
+                    <TableCell>
+                      {format(new Date(receipt.date), "MMM d, yyyy")}
+                    </TableCell>
                     <TableCell>{receipt.store}</TableCell>
-                    <TableCell className="text-right">${receipt.total.toFixed(2)}</TableCell>
-                    <TableCell className="text-right">{receipt.items.length}</TableCell>
+                    <TableCell className="text-right">
+                      ${receipt.total.toFixed(2)}
+                    </TableCell>
+                    <TableCell className="text-right">
+                      {receipt.items.length}
+                    </TableCell>
                     <TableCell className="text-right">
                       <Dialog>
                         <DialogTrigger asChild>
-                          <Button variant="ghost" size="icon" onClick={() => setSelectedReceipt(receipt)}>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => setSelectedReceipt(receipt)}
+                          >
                             <Eye className="h-4 w-4" />
                           </Button>
                         </DialogTrigger>
@@ -76,14 +108,21 @@ export function RecentReceipts() {
                             <div className="space-y-4">
                               <div className="flex justify-between">
                                 <div>
-                                  <p className="font-medium">{selectedReceipt.store}</p>
+                                  <p className="font-medium">
+                                    {selectedReceipt.store}
+                                  </p>
                                   <p className="text-sm text-muted-foreground">
-                                    {format(new Date(selectedReceipt.date), "MMMM d, yyyy")}
+                                    {format(
+                                      new Date(selectedReceipt.date),
+                                      "MMMM d, yyyy"
+                                    )}
                                   </p>
                                 </div>
                                 <div className="text-right">
                                   <p className="font-medium">Total</p>
-                                  <p className="text-xl font-bold">${selectedReceipt.total.toFixed(2)}</p>
+                                  <p className="text-xl font-bold">
+                                    ${selectedReceipt.total.toFixed(2)}
+                                  </p>
                                 </div>
                               </div>
                               <Table>
@@ -91,7 +130,9 @@ export function RecentReceipts() {
                                   <TableRow>
                                     <TableHead>Item</TableHead>
                                     <TableHead>Category</TableHead>
-                                    <TableHead className="text-right">Price</TableHead>
+                                    <TableHead className="text-right">
+                                      Price
+                                    </TableHead>
                                   </TableRow>
                                 </TableHeader>
                                 <TableBody>
@@ -99,7 +140,9 @@ export function RecentReceipts() {
                                     <TableRow key={index}>
                                       <TableCell>{item.name}</TableCell>
                                       <TableCell>{item.category}</TableCell>
-                                      <TableCell className="text-right">${item.price.toFixed(2)}</TableCell>
+                                      <TableCell className="text-right">
+                                        ${item.price.toFixed(2)}
+                                      </TableCell>
                                     </TableRow>
                                   ))}
                                 </TableBody>
@@ -117,11 +160,12 @@ export function RecentReceipts() {
         ) : (
           <div className="flex flex-col items-center justify-center h-32 gap-2">
             <Receipt className="h-8 w-8 text-muted-foreground" />
-            <p className="text-muted-foreground">No receipts found. Upload your first receipt to get started!</p>
+            <p className="text-muted-foreground">
+              No receipts found. Upload your first receipt to get started!
+            </p>
           </div>
         )}
       </CardContent>
     </Card>
-  )
+  );
 }
-

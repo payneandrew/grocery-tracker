@@ -1,9 +1,18 @@
-import { ReceiptUploader } from "@/components/receipt-uploader"
-import { DashboardHeader } from "@/components/dashboard-header"
-import { SpendingOverview } from "@/components/spending-overview"
-import { RecentReceipts } from "@/components/recent-receipts"
+"use client";
+
+import { DashboardHeader } from "@/components/dashboard-header";
+import { ReceiptUploader } from "@/components/receipt-uploader";
+import { RecentReceipts } from "@/components/recent-receipts";
+import { SpendingOverview } from "@/components/spending-overview";
+import { useEffect } from "react";
+import { v4 as uuidv4 } from "uuid";
 
 export default function Home() {
+  useEffect(() => {
+    if (!localStorage.getItem("anonUserId")) {
+      localStorage.setItem("anonUserId", uuidv4());
+    }
+  }, []);
   return (
     <main className="container mx-auto px-4 py-8">
       <DashboardHeader />
@@ -19,6 +28,5 @@ export default function Home() {
         <RecentReceipts />
       </div>
     </main>
-  )
+  );
 }
-
