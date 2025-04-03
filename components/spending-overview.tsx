@@ -14,6 +14,7 @@ import { getSpendingData } from "@/lib/data";
 import { getUserId } from "@/lib/get-user-id";
 import type { SpendingData } from "@/lib/types";
 import { useEffect, useState } from "react";
+import { v4 as uuidv4 } from "uuid";
 
 export function SpendingOverview() {
   const [spendingData, setSpendingData] = useState<SpendingData | null>(null);
@@ -21,6 +22,12 @@ export function SpendingOverview() {
     "month"
   );
   const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    if (!localStorage.getItem("anonUserId")) {
+      localStorage.setItem("anonUserId", uuidv4());
+    }
+  }, []);
 
   useEffect(() => {
     const fetchData = async () => {
